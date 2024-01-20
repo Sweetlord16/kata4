@@ -1,44 +1,39 @@
 package kata4.eric;
 
 import kata4.eric.View.DataProvider;
+import kata4.eric.View.DatabaseManager;
 import kata4.eric.View.MainFrame;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class Main {
     public static void main(String[] args) {
         MainFrame mainFrame = new MainFrame();
-        String path = "C:\\Users\\Eric\\IdeaProjects\\kata3\\src\\main\\java\\kata3\\eric\\datos.csv";
-        try{
-            mainFrame.histogramDisplay().show(new DataProvider() {
-                @Override
-                public ArrayList<Integer> getAltura(String path) {
-                    ArrayList<Integer> alturas = new ArrayList<>();
-                    try(BufferedReader br = new BufferedReader(new FileReader(path))){
-                        String line;
-                        br.readLine();
-                        while((line = br.readLine()) != null){
-                            String[] fragmentos = line.split(";");
-                            if(fragmentos.length >= 2){
-                                alturas.add(Integer.parseInt(fragmentos[1]));
-                            }else {
-                                System.err.println("Error en la linea" + line);
-                            }
+        mainFrame.histogramDisplay().show(new DataProvider() {
+
+            @Override
+            public ArrayList<Integer> getAltura() {
+                ArrayList<Integer> alturas = new ArrayList<>();
+                try(Connection connection = DatabaseManager.getConnection()) {
+                    String query = "SELECT * FROM plantas";
+                    try(PreparedStatement statement = connection.prepareStatement(query);
+                        ResultSet resultSet = statement.executeQuery()) {
+                        while (resultSet.next()) {
+                            alturas.add(resultSet.getInt("Altura"));
                         }
-                    }catch (IOException | NumberFormatException e){
-                        e.printStackTrace();
+                        System.out.println(alturas);
                     }
-                    return alturas;
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
-            });
-            mainFrame.setVisible(true);
-        }catch (Exception e){
-            e.printStackTrace();
-            System.err.println("Error al cargar el archivo" + e.getMessage());
-        }
+                return alturas;
+
+            }
+        });
+        mainFrame.setVisible(true);
     }
 }
-
